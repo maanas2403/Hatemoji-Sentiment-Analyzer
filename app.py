@@ -113,28 +113,36 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()  # Get JSON data from the request
-    user_input = data['text']  # Extract 'text' from the JSON payload
-    
-    # Run predictions 10 times and get majority result
-    most_common_emoji = run_predictions(user_input)
+    try:
+        data = request.get_json()  # Get JSON data from the request
+        if not data or 'text' not in data:
+            return jsonify({'error': 'No text provided'}), 400
 
-    # Calculate sentiment for the input text
-    processed_text = preprocess_text(user_input)
-    sentiment_score = text_sentiment(processed_text)
+        user_input = data['text']  # Extract 'text' from the JSON payload
+        if not user_input:
+            return jsonify({'error': 'Empty text provided'}), 400
 
-    # Calculate emoji sentiment
-    emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)  # Default to 50 if not found
-    combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
-    
-    response = {
-        'input_text': user_input,
-        'predicted_emoji': most_common_emoji,
-        'sentiment_score': round(sentiment_score, 2),
-        'emoji_sentiment': emoji_sentiment_value,
-        'combined_sentiment': round(combined_sentiment, 2)
-    }
-    return jsonify(response)
+        # Run predictions 10 times and get majority result
+        most_common_emoji = run_predictions(user_input)
+
+        # Calculate sentiment for the input text
+        processed_text = preprocess_text(user_input)
+        sentiment_score = text_sentiment(processed_text)
+
+        # Calculate emoji sentiment
+        emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)  # Default to 50 if not found
+        combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
+        
+        response = {
+            'input_text': user_input,
+            'predicted_emoji': most_common_emoji,
+            'sentiment_score': round(sentiment_score, 2),
+            'emoji_sentiment': emoji_sentiment_value,
+            'combined_sentiment': round(combined_sentiment, 2)
+        }
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
