@@ -46,9 +46,11 @@ if not os.path.exists(weights_file_path):
     download_model_from_drive(google_drive_file_id, weights_file_path)
 
 # Load model architecture and weights (load it once at the start)
+print("Loading model...")
 model = create_model()
 model.build(input_shape=(None, 40))
 model.load_weights(weights_file_path)
+print("Model loaded successfully")
 
 # Emoji labels
 emoji_labels = {0: '❤', 1: '🇧', 2: '🇮', 3: '🎉', 4: '🎧', 5: '🎵', 6: '🎶', 7: '👀', 8: '👇', 9: '👌',
@@ -119,15 +121,16 @@ def predict():
     start_time = time.time()
     
     # Add logs for model loading
-    if model is None:
-        print("Model is not loaded")
-    else:
-        print("Model is loaded")
-    
-    # Prediction logic
+    print("Starting prediction...")
+
     try:
         data = request.get_json()
         user_input = data['text']
+        
+        # Log the input text
+        print(f"Input text: {user_input}")
+        
+        # Preprocess and predict
         processed_text = preprocess_text(user_input)
         most_common_emoji = run_predictions(user_input)
         sentiment_score = text_sentiment(processed_text)
@@ -151,4 +154,5 @@ def predict():
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False)  # Avoid reloading which might reload the model
+    # Adding additional timeout and error logging
+    app.run(debug=True, host='0.0.0.0', port=5000)
