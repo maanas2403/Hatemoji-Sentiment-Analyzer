@@ -92,7 +92,7 @@ def calculate_rms(text_sentiment, emoji_sentiment):
     return np.sqrt((text_sentiment ** 2 + emoji_sentiment ** 2) / 2)
 
 # Predict function - run 10 times and return majority result
-def run_predictions(user_input, num_runs=10):
+def run_predictions(user_input, num_runs=1):
     predictions = []
     processed_text = preprocess_text(user_input)
     tokenizer.fit_on_texts([processed_text])  # Fit tokenizer to the current input
