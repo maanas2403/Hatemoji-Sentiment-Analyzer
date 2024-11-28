@@ -102,6 +102,7 @@
                 .then(response => response.json())
                 .then(data => {
                     // Hide input container and show result container
+                    console.log(data);
                     document.getElementById('inputContainer').style.display = 'none';
                     document.getElementById('resultContainer').style.display = 'block';
                     document.getElementById('comment').innerText = userText;
@@ -119,7 +120,11 @@
                     } else {
                         resultContainer.style.backgroundColor = '#ffcccb'; // Light red for negative sentiment
                     }
-                });
+                })
+                .catch(error => {
+    console.error('Error during prediction:', error);
+    alert('Something went wrong. Please try again later.');
+});
         }
 
         // Function to reset the UI when the "Return" button is clicked
