@@ -114,25 +114,25 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.get_json()  # Get JSON data from the request
+        # Log incoming data
+        data = request.get_json()
         if not data or 'text' not in data:
             return jsonify({'error': 'No text provided'}), 400
 
-        user_input = data['text']  # Extract 'text' from the JSON payload
+        user_input = data['text']
         if not user_input:
             return jsonify({'error': 'Empty text provided'}), 400
 
-        # Run predictions 10 times and get majority result
-        most_common_emoji = run_predictions(user_input)
-
-        # Calculate sentiment for the input text
+        # Log preprocessed text
         processed_text = preprocess_text(user_input)
-        sentiment_score = text_sentiment(processed_text)
+        print(f"Processed text: {processed_text}")
 
-        # Calculate emoji sentiment
-        emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)  # Default to 50 if not found
+        # Run predictions and calculate sentiment
+        most_common_emoji = run_predictions(user_input)
+        sentiment_score = text_sentiment(processed_text)
+        emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)
         combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
-        
+
         response = {
             'input_text': user_input,
             'predicted_emoji': most_common_emoji,
@@ -140,9 +140,13 @@ def predict():
             'emoji_sentiment': emoji_sentiment_value,
             'combined_sentiment': round(combined_sentiment, 2)
         }
+
         return jsonify(response)
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Log the error for debugging
+        print(f"Error during prediction: {e}")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
