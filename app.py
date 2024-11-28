@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from collections import Counter
 import gdown
 import os
-
+import time
 app = Flask(__name__, template_folder='templates')
 
 # Define the tokenizer
@@ -113,25 +113,26 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    start_time = time.time()
+    
+    # Add logs for model loading
+    if model is None:
+        print("Model is not loaded")
+    else:
+        print("Model is loaded")
+    
+    # Prediction logic
     try:
-        # Log incoming data
         data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'No text provided'}), 400
-
         user_input = data['text']
-        if not user_input:
-            return jsonify({'error': 'Empty text provided'}), 400
-
-        # Log preprocessed text
         processed_text = preprocess_text(user_input)
-        print(f"Processed text: {processed_text}")
-
-        # Run predictions and calculate sentiment
         most_common_emoji = run_predictions(user_input)
         sentiment_score = text_sentiment(processed_text)
         emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)
         combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
+
+        # Log the time taken to process
+        print(f"Prediction took {time.time() - start_time} seconds")
 
         response = {
             'input_text': user_input,
@@ -140,11 +141,9 @@ def predict():
             'emoji_sentiment': emoji_sentiment_value,
             'combined_sentiment': round(combined_sentiment, 2)
         }
-
         return jsonify(response)
 
     except Exception as e:
-        # Log the error for debugging
         print(f"Error during prediction: {e}")
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
