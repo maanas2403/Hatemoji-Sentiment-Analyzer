@@ -99,7 +99,10 @@
                 },
                 body: JSON.stringify({ text: userText }),
             })
-                .then(response => response.json())
+                .then(response => if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();)
                 .then(data => {
                     // Hide input container and show result container
                     console.log(data);
