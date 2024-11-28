@@ -8,6 +8,8 @@ from tensorflow.keras.layers import Dropout, Dense, LSTM, Bidirectional, Embeddi
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 from collections import Counter
+import gdown
+import os
 
 app = Flask(__name__, template_folder='templates')
 
@@ -29,10 +31,21 @@ def create_model():
     ])
     return model
 
+# Function to download model weights from Google Drive
+def download_model_from_drive(file_id, local_filename='BTP_eval.weights.h5'):
+    url = f"https://drive.google.com/uc?id={file_id}"
+    gdown.download(url, local_filename, quiet=False)
+
+# Download the model weights from Google Drive if not already present
+weights_file_path = 'BTP_eval.weights.h5'
+if not os.path.exists(weights_file_path):
+    google_drive_file_id = '1r--l8HrNN2p7ldXvAFeHVA_3njoQSYio'  # Replace with your file ID
+    download_model_from_drive(google_drive_file_id, weights_file_path)
+
 # Load model architecture and weights
 model = create_model()
 model.build(input_shape=(None, 40))
-model.load_weights('BTP_eval.weights.h5')
+model.load_weights(weights_file_path)
 
 # Emoji labels
 emoji_labels = {0: '❤', 1: '🇧', 2: '🇮', 3: '🎉', 4: '🎧', 5: '🎵', 6: '🎶', 7: '👀', 8: '👇', 9: '👌',
