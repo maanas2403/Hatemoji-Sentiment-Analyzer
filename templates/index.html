@@ -92,7 +92,7 @@
             // Disable the analyze button and change its text to "Return"
             document.getElementById('analyzeButton').innerText = 'Return';
 
-            fetch('ttps://hatemoji-sentiment-analyzer.onrender.com/predict', {
+            fetch('https://hatemoji-sentiment-analyzer.onrender.com/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
