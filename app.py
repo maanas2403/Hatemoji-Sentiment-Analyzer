@@ -12,8 +12,10 @@ import gdown
 import os
 import time
 from flask_cors import CORS
+
 app = Flask(__name__, template_folder='templates')
 CORS(app)
+
 # Define the tokenizer
 tokenizer = Tokenizer(num_words=80000)
 maxlen = 40  # Ensure this matches what you used during training
