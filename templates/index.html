@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hatemoji Sentiment Analyzer 😊😞</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4CAF50;
+            font-size: 2.5rem;
+        }
+
+        .emoji-container {
+            margin: 20px;
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin: 0 10px;
+        }
+
+        .input-container {
+            margin: 20px;
+        }
+
+        textarea {
+            width: 80%;
+            height: 100px;
+            margin: 10px;
+            padding: 10px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .signal {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Hatemoji Sentiment Analyzer 😊😞</h1>
+    
+    <!-- Input container (Text box + Analyze button) -->
+    
+    
+    <!-- Result container -->
+    <div class="result-container" id="resultContainer" style="display:none;">
+        <h2>Result:</h2>
+        <p><strong>Comment:</strong> <span id="comment"></span></p>
+        <p><strong>Predicted Emoji:</strong> <span id="predictedEmoji" class="emoji"></span></p>
+        <p><strong>Sentiment Score:</strong> <span id="sentimentScore"></span></p>
+        <p><strong>Emoji Sentiment:</strong> <span id="emojiSentiment"></span></p>
+        <p><strong>Combined Sentiment:</strong> <span id="combinedSentiment"></span></p>
+    </div>
+    <div class="input-container" id="inputContainer">
+        <textarea id="userText" placeholder="Enter your text here..."></textarea><br>
+        
+    </div>
+    <button id="analyzeButton">Analyze</button>
+    <script>
+        // Function to analyze the text and show the result container
+        function analyzeText() {
+            var userText = document.getElementById('userText').value;
+
+            // Disable the analyze button and change its text to "Return"
+            document.getElementById('analyzeButton').innerText = 'Return';
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: userText }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide input container and show result container
+                    document.getElementById('inputContainer').style.display = 'none';
+                    document.getElementById('resultContainer').style.display = 'block';
+                    document.getElementById('comment').innerText = userText;
+                    document.getElementById('predictedEmoji').innerText = data.predicted_emoji;
+                    document.getElementById('sentimentScore').innerText = data.sentiment_score;
+                    document.getElementById('emojiSentiment').innerText = data.emoji_sentiment;
+                    document.getElementById('combinedSentiment').innerText = data.combined_sentiment;
+
+                    // Change the background color of the result container based on combined sentiment
+                    var combinedSentiment = data.combined_sentiment;
+                    var resultContainer = document.getElementById('resultContainer');
+
+                    if (combinedSentiment > 50) {
+                        resultContainer.style.backgroundColor = '#d4edda'; // Light green for positive sentiment
+                    } else {
+                        resultContainer.style.backgroundColor = '#ffcccb'; // Light red for negative sentiment
+                    }
+                });
+        }
+
+        // Function to reset the UI when the "Return" button is clicked
+        function returnToDefault() {
+            // Clear the input field
+            document.getElementById('userText').value = '';
+
+            // Hide the result container and show the input container
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('inputContainer').style.display = 'block';
+
+            // Enable the Analyze button and change text back to 'Analyze'
+            var analyzeButton = document.getElementById('analyzeButton');
+            analyzeButton.disabled = false;
+            analyzeButton.innerText = 'Analyze';
+        }
+
+        // Attach the click event listener to the button
+        document.getElementById('analyzeButton').addEventListener('click', function () {
+            // Check if the button text is "Return" to trigger the reset
+            if (this.innerText === 'Return') {
+                returnToDefault();
+            } else {
+                analyzeText();
+            }
+        });
+    </script>
+
+</body>
+</html>
