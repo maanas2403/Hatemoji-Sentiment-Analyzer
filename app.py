@@ -16,7 +16,7 @@ from flask_cors import CORS
 app = Flask(__name__, template_folder='templates')
 CORS(app)
 
-# Define the tokenizer
+# Define the tokenizer and load it globally
 tokenizer = Tokenizer(num_words=80000)
 maxlen = 40  # Ensure this matches what you used during training
 
@@ -45,7 +45,7 @@ if not os.path.exists(weights_file_path):
     google_drive_file_id = '1r--l8HrNN2p7ldXvAFeHVA_3njoQSYio'  # Replace with your file ID
     download_model_from_drive(google_drive_file_id, weights_file_path)
 
-# Load model architecture and weights
+# Load model architecture and weights (load it once at the start)
 model = create_model()
 model.build(input_shape=(None, 40))
 model.load_weights(weights_file_path)
@@ -151,4 +151,4 @@ def predict():
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)  # Avoid reloading which might reload the model
