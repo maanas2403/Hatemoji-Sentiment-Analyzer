@@ -1,6 +1,6 @@
 Flask==3.0.3
 TextBlob==0.18.0.post0
-tensorflow==3.0.3
+tensorflow==2.16.1
 numpy==1.26.2
 gunicorn==20.1.0
 
