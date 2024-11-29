@@ -1,3 +1,4 @@
+import gradio as gr
 import numpy as np
 from textblob import TextBlob
 from flask import Flask, request, render_template, jsonify
@@ -10,13 +11,11 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from collections import Counter
 import gdown
 import os
-import time
-from flask_cors import CORS
 
+# Initialize Flask
 app = Flask(__name__, template_folder='templates')
-CORS(app)
 
-# Define the tokenizer and load it globally
+# Define the tokenizer
 tokenizer = Tokenizer(num_words=80000)
 maxlen = 40  # Ensure this matches what you used during training
 
@@ -45,21 +44,18 @@ if not os.path.exists(weights_file_path):
     google_drive_file_id = '1r--l8HrNN2p7ldXvAFeHVA_3njoQSYio'  # Replace with your file ID
     download_model_from_drive(google_drive_file_id, weights_file_path)
 
-# Load model architecture and weights (load it once at the start)
-print("Loading model...")
+# Load model architecture and weights
 model = create_model()
 model.build(input_shape=(None, 40))
 model.load_weights(weights_file_path)
-print("Model loaded successfully")
 
-# Emoji labels
+# Emoji labels and sentiment
 emoji_labels = {0: '❤', 1: '🇧', 2: '🇮', 3: '🎉', 4: '🎧', 5: '🎵', 6: '🎶', 7: '👀', 8: '👇', 9: '👌',
                 10: '👍', 11: '👏', 12: '💀', 13: '💔', 14: '💕', 15: '💖', 16: '💯', 17: '🔥', 18: '🕊',
                 19: '🗿', 20: '😀', 21: '😁', 22: '😂', 23: '😅', 24: '😊', 25: '😌', 26: '😍', 27: '😎',
                 28: '😔', 29: '😘', 30: '😢', 31: '😭', 32: '😮', 33: '😳', 34: '🙂', 35: '🙏', 36: '🚩',
                 37: '🤣', 38: '🥰', 39: '🥺'}
 
-# Emoji sentiment dictionary
 emoji_sentiment = {
     "❤": 90, "🇧": 50, "🇮": 50, "🎉": 85, "🎧": 70, "🎵": 75,
     "🎶": 75, "👀": 50, "👇": 30, "👌": 80, "👍": 85, "👏": 88,
@@ -97,7 +93,7 @@ def calculate_rms(text_sentiment, emoji_sentiment):
     return np.sqrt((text_sentiment ** 2 + emoji_sentiment ** 2) / 2)
 
 # Predict function - run 10 times and return majority result
-def run_predictions(user_input, num_runs=1):
+def run_predictions(user_input, num_runs=10):
     predictions = []
     processed_text = preprocess_text(user_input)
     tokenizer.fit_on_texts([processed_text])  # Fit tokenizer to the current input
@@ -112,47 +108,32 @@ def run_predictions(user_input, num_runs=1):
     most_common_emoji = Counter(predictions).most_common(1)[0][0]
     return most_common_emoji
 
+# Gradio Interface Function
+def predict_emoji(user_input):
+    most_common_emoji = run_predictions(user_input)
+    processed_text = preprocess_text(user_input)
+    sentiment_score = text_sentiment(processed_text)
+    emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)  # Default to 50 if not found
+    combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
+    
+    return {
+        'input_text': user_input,
+        'predicted_emoji': most_common_emoji,
+        'sentiment_score': round(sentiment_score, 2),
+        'emoji_sentiment': emoji_sentiment_value,
+        'combined_sentiment': round(combined_sentiment, 2)
+    }
+
+# Gradio interface setup
+interface = gr.Interface(fn=predict_emoji, inputs="text", outputs="json")
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    start_time = time.time()
-    
-    # Add logs for model loading
-    print("Starting prediction...")
-
-    try:
-        data = request.get_json()
-        user_input = data['text']
-        
-        # Log the input text
-        print(f"Input text: {user_input}")
-        
-        # Preprocess and predict
-        processed_text = preprocess_text(user_input)
-        most_common_emoji = run_predictions(user_input)
-        sentiment_score = text_sentiment(processed_text)
-        emoji_sentiment_value = emoji_sentiment.get(most_common_emoji, 50)
-        combined_sentiment = calculate_rms(sentiment_score, emoji_sentiment_value)
-
-        # Log the time taken to process
-        print(f"Prediction took {time.time() - start_time} seconds")
-
-        response = {
-            'input_text': user_input,
-            'predicted_emoji': most_common_emoji,
-            'sentiment_score': round(sentiment_score, 2),
-            'emoji_sentiment': emoji_sentiment_value,
-            'combined_sentiment': round(combined_sentiment, 2)
-        }
-        return jsonify(response)
-
-    except Exception as e:
-        print(f"Error during prediction: {e}")
-        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
+@app.route('/gradio', methods=['GET'])
+def gradio_interface():
+    return interface.launch(share=True)
 
 if __name__ == '__main__':
-    # Adding additional timeout and error logging
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)
